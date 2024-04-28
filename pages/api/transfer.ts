@@ -3,19 +3,23 @@ import { Connection, PublicKey, Transaction, LAMPORTS_PER_SOL, SystemProgram } f
 import { sendAndConfirmTransaction } from '@solana/web3.js';
 import { Keypair } from '@solana/web3.js';
 
-// This is a mock private key; replace with the actual private key of the gas sponsor wallet
-const GAS_SPONSOR_SECRET_KEY = new Uint8Array([
-  // The private key for the gas sponsor wallet should be securely retrieved from an environment variable or secret manager
-]);
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
       // Parse the request body to get the recipient's wallet address and the amount of SOL to be transferred
       const { recipient, amount } = req.body;
-      if (!recipient || !amount) {
-        return res.status(400).json({ error: 'Recipient and amount are required.' });
+      if (!recipient || !amount || typeof amount !== 'number') {
+        return res.status(400).json({ error: 'Recipient and amount are required and amount must be a number.' });
       }
+
+      // Check if the GAS_SPONSOR_SECRET_KEY is defined
+      if (!process.env.GAS_SPONSOR_SECRET_KEY) {
+        console.error('GAS_SPONSOR_SECRET_KEY is not defined in the environment variables.');
+        return res.status(500).json({ error: 'Server configuration error' });
+      }
+
+      // Convert the secret key from environment variable to Uint8Array
+      const secretKeyUint8Array = Uint8Array.from(process.env.GAS_SPONSOR_SECRET_KEY.split(',').map(num => parseInt(num, 10)));
 
       // Create a new connection to the Solana devnet
       const rpcEndpoint = process.env.RPC_ENDPOINT || 'https://devnet.helius-rpc.com/?api-key=7514a7bd-79b3-44f0-b42b-8db3c48038a7';
@@ -24,14 +28,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Create a transaction
       const transaction = new Transaction().add(
         SystemProgram.transfer({
-          fromPubkey: Keypair.fromSecretKey(GAS_SPONSOR_SECRET_KEY).publicKey,
+          fromPubkey: Keypair.fromSecretKey(secretKeyUint8Array).publicKey,
           toPubkey: new PublicKey(recipient),
           lamports: LAMPORTS_PER_SOL * amount,
         })
       );
 
       // Sign the transaction with the gas sponsor's wallet
-      const gasSponsorKeypair = Keypair.fromSecretKey(GAS_SPONSOR_SECRET_KEY);
+      const gasSponsorKeypair = Keypair.fromSecretKey(secretKeyUint8Array);
       transaction.sign(gasSponsorKeypair);
 
       // Send the transaction to the Solana blockchain
