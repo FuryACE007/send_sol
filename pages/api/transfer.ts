@@ -43,9 +43,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Respond with the result of the transaction submission
       res.status(200).json({ signature });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing transfer:', error);
-      res.status(500).json({ error: 'Error processing transfer' });
+      res.status(500).json({ error: 'Error processing transfer', errorMessage: error.message });
     }
   } else {
     res.setHeader('Allow', 'POST');
