@@ -13,6 +13,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Convert the base58-encoded gas sponsor private key to a Uint8Array
       const secretKeyUint8Array = bs58.decode(gasSponsorPrivateKey);
+
+      // Check if the secret key is of the correct size (64 bytes)
+      if (secretKeyUint8Array.length !== 64) {
+        return res.status(400).json({ error: 'Invalid gas sponsor private key size. It must be 64 bytes long.' });
+      }
+
       const gasSponsorKeypair = Keypair.fromSecretKey(secretKeyUint8Array);
 
       // Create a new connection to the Solana devnet
