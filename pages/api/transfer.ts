@@ -55,6 +55,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Sign the transaction with the gas sponsor's keypair
       transaction.sign(gasSponsorKeypair);
 
+      // Log the transaction signatures
+      console.log('Transaction signatures:', transaction.signatures);
+
       // Send the transaction to the Solana blockchain
       const signature = await connection.sendRawTransaction(transaction.serialize());
 
