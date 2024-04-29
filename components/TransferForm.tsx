@@ -27,6 +27,22 @@ const TransferForm = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
+
+    // Validate the amount to ensure it's a number and greater than 0
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert('Please enter a valid amount of SOL to send.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Ensure all fields are filled
+    if (!publicKey || !recipient || !gasSponsorPrivateKey) {
+      alert('Please make sure all fields are filled and your wallet is connected.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/transfer', {
         method: 'POST',
@@ -34,9 +50,9 @@ const TransferForm = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          senderPublicKey: publicKey?.toBase58(),
+          senderPublicKey: publicKey.toBase58(),
           recipient,
-          amount: parseFloat(amount),
+          amount: parsedAmount,
           gasSponsorPrivateKey,
         }),
       });
