@@ -11,6 +11,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Recipient, amount, gas sponsor private key, and sender public key are required. Amount must be a number.' });
       }
 
+      // Log the senderPublicKey and recipient to verify their format before creating PublicKey instances
+      console.log('senderPublicKey:', senderPublicKey);
+      console.log('recipient:', recipient);
+
       // Convert the base58-encoded gas sponsor private key to a Uint8Array
       const secretKeyUint8Array = bs58.decode(gasSponsorPrivateKey);
 
@@ -52,7 +56,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(200).json({ signature, confirmResult });
     } catch (error: any) {
       console.error('Error processing transfer:', error);
-      res.status(500).json({ error: 'Error processing transfer', errorMessage: error.message });
+      console.error('Full stack:', error.stack); // Added detailed error stack logging
+      res.status(500).json({ error: 'Error processing transfer', errorMessage: error.message, errorStack: error.stack });
     }
   } else {
     res.setHeader('Allow', 'POST');
