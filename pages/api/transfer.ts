@@ -37,8 +37,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         recentBlockhash: blockhash
       }).add(
         SystemProgram.transfer({
-          fromPubkey: new PublicKey(senderPublicKey), // Use the connected user's wallet public key as the sender
-          toPubkey: new PublicKey(recipient),
+          fromPubkey: new PublicKey(String(senderPublicKey)), // Use the connected user's wallet public key as the sender
+          toPubkey: new PublicKey(String(recipient)),
           lamports: LAMPORTS_PER_SOL * amount
         })
       );
