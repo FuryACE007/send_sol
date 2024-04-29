@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { TextField, Button, Typography, Container, Box } from '@mui/material';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 const TransferForm = () => {
+  const { publicKey } = useWallet();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [gasSponsorPrivateKey, setGasSponsorPrivateKey] = useState('');
@@ -29,6 +31,7 @@ const TransferForm = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          senderPublicKey: publicKey?.toBase58(),
           recipient,
           amount: parseFloat(amount),
           gasSponsorPrivateKey,

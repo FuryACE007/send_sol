@@ -1,23 +1,18 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Connection, PublicKey, Keypair, LAMPORTS_PER_SOL, SystemProgram, Transaction } from '@solana/web3.js';
+import bs58 from 'bs58';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
-      // Parse the request body to get the recipient's wallet address and the amount of SOL to be transferred
-      const { recipient, amount } = req.body;
-      if (!recipient || !amount || typeof amount !== 'number') {
-        return res.status(400).json({ error: 'Recipient and amount are required and amount must be a number.' });
+      // Parse the request body to get the recipient's wallet address, the amount of SOL to be transferred, and the gas sponsor's private key
+      const { recipient, amount, gasSponsorPrivateKey, senderPublicKey } = req.body;
+      if (!recipient || !amount || typeof amount !== 'number' || !gasSponsorPrivateKey || !senderPublicKey) {
+        return res.status(400).json({ error: 'Recipient, amount, gas sponsor private key, and sender public key are required. Amount must be a number.' });
       }
 
-      // Check if the GAS_SPONSOR_SECRET_KEY is defined
-      if (!process.env.GAS_SPONSOR_SECRET_KEY) {
-        console.error('GAS_SPONSOR_SECRET_KEY is not defined in the environment variables.');
-        return res.status(500).json({ error: 'Server configuration error' });
-      }
-
-      // Convert the secret key from environment variable to Uint8Array
-      const secretKeyUint8Array = Uint8Array.from(process.env.GAS_SPONSOR_SECRET_KEY.split(',').map(num => parseInt(num, 10)));
+      // Convert the base58-encoded gas sponsor private key to a Uint8Array
+      const secretKeyUint8Array = bs58.decode(gasSponsorPrivateKey);
       const gasSponsorKeypair = Keypair.fromSecretKey(secretKeyUint8Array);
 
       // Create a new connection to the Solana devnet
@@ -32,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         recentBlockhash: blockhash
       }).add(
         SystemProgram.transfer({
-          fromPubkey: gasSponsorKeypair.publicKey,
+          fromPubkey: new PublicKey(senderPublicKey), // Use the connected user's wallet public key as the sender
           toPubkey: new PublicKey(recipient),
           lamports: LAMPORTS_PER_SOL * amount
         })
