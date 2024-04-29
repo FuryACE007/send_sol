@@ -32,13 +32,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Fetch the recent blockhash
       const { blockhash } = await connection.getRecentBlockhash();
 
+      // Log the senderPublicKey and recipient to verify their format before creating PublicKey instances
+      console.log('Trimmed senderPublicKey:', senderPublicKey.trim());
+      console.log('Trimmed recipient:', recipient.trim());
+
       // Create a transaction
       const transaction = new Transaction({
         recentBlockhash: blockhash
       }).add(
         SystemProgram.transfer({
-          fromPubkey: new PublicKey(String(senderPublicKey).trim()), // Use the connected user's wallet public key as the sender
-          toPubkey: new PublicKey(String(recipient).trim()),
+          fromPubkey: new PublicKey(senderPublicKey.trim()), // Use the connected user's wallet public key as the sender
+          toPubkey: new PublicKey(recipient.trim()),
           lamports: LAMPORTS_PER_SOL * amount
         })
       );
