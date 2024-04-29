@@ -52,7 +52,7 @@ const TransferForm = () => {
         const signedTransaction = await signTransaction(transaction);
         const serializedSignedTransaction = signedTransaction.serialize();
 
-        const submitResponse = await fetch('/api/submitTransaction', {
+        const submitResponse = await fetch('/api/transfer', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
