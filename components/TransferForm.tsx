@@ -5,6 +5,7 @@ import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 const TransferForm = () => {
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
+  const [gasSponsorPrivateKey, setGasSponsorPrivateKey] = useState('');
 
   const handleRecipientChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRecipient(event.target.value);
@@ -12,6 +13,10 @@ const TransferForm = () => {
 
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAmount(event.target.value);
+  };
+
+  const handleGasSponsorPrivateKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setGasSponsorPrivateKey(event.target.value);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -26,6 +31,7 @@ const TransferForm = () => {
         body: JSON.stringify({
           recipient,
           amount: parseFloat(amount),
+          gasSponsorPrivateKey,
         }),
       });
 
@@ -73,6 +79,18 @@ const TransferForm = () => {
             autoComplete="amount"
             value={amount}
             onChange={handleAmountChange}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="gasSponsorPrivateKey"
+            label="Gas Sponsor Private Key"
+            type="password"
+            id="gasSponsorPrivateKey"
+            autoComplete="current-password"
+            value={gasSponsorPrivateKey}
+            onChange={handleGasSponsorPrivateKeyChange}
           />
           <Button
             type="submit"
