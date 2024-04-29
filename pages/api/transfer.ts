@@ -36,6 +36,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log('Trimmed senderPublicKey:', senderPublicKey.trim());
       console.log('Trimmed recipient:', recipient.trim());
 
+      // Validate that senderPublicKey and recipient are base58 strings
+      if (!bs58.decodeUnsafe(senderPublicKey.trim()) || !bs58.decodeUnsafe(recipient.trim())) {
+        return res.status(400).json({ error: 'Invalid senderPublicKey or recipient. They must be base58 strings.' });
+      }
+
       // Create a transaction
       const transaction = new Transaction({
         recentBlockhash: blockhash
