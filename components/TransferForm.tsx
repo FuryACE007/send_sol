@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { TextField, Button, Typography, Container, Box } from '@mui/material';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { Transaction, PublicKey } from '@solana/web3.js';
+import bs58 from 'bs58';
 
 const TransferForm = () => {
-  const { publicKey } = useWallet();
+  const { publicKey, signTransaction } = useWallet();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [gasSponsorPrivateKey, setGasSponsorPrivateKey] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRecipientChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRecipient(event.target.value);
@@ -23,7 +26,7 @@ const TransferForm = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // Implement the transfer logic
+    setIsSubmitting(true);
     try {
       const response = await fetch('/api/transfer', {
         method: 'POST',
@@ -42,12 +45,38 @@ const TransferForm = () => {
         throw new Error(`Error: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log('Transaction signature:', data.signature);
-      alert(`Transfer successful! Transaction signature: ${data.signature}`);
+      const { serializedTransaction } = await response.json();
+      const transaction = Transaction.from(bs58.decode(serializedTransaction));
+
+      if (signTransaction) {
+        const signedTransaction = await signTransaction(transaction);
+        const serializedSignedTransaction = signedTransaction.serialize();
+
+        const submitResponse = await fetch('/api/submitTransaction', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            signedTransaction: bs58.encode(serializedSignedTransaction),
+          }),
+        });
+
+        if (!submitResponse.ok) {
+          throw new Error(`Error: ${submitResponse.status}`);
+        }
+
+        const submitData = await submitResponse.json();
+        console.log('Transaction signature:', submitData.signature);
+        alert(`Transfer successful! Transaction signature: ${submitData.signature}`);
+      } else {
+        throw new Error('Wallet not connected or signTransaction function not available');
+      }
     } catch (error) {
       console.error('Error submitting transfer:', error);
       alert('Transfer failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -100,8 +129,9 @@ const TransferForm = () => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
+            disabled={isSubmitting}
           >
-            Send SOL
+            {isSubmitting ? 'Sending...' : 'Send SOL'}
           </Button>
         </Box>
       </Box>

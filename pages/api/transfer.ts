@@ -11,10 +11,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Recipient, amount, gas sponsor private key, and sender public key are required. Amount must be a number.' });
       }
 
-      // Log the senderPublicKey and recipient to verify their format before creating PublicKey instances
-      console.log('senderPublicKey:', senderPublicKey);
-      console.log('recipient:', recipient);
-
       // Convert the base58-encoded gas sponsor private key to a Uint8Array
       const secretKeyUint8Array = bs58.decode(gasSponsorPrivateKey);
 
@@ -32,10 +28,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Fetch the recent blockhash
       const { blockhash } = await connection.getRecentBlockhash();
 
-      // Log the senderPublicKey and recipient to verify their format before creating PublicKey instances
-      console.log('Trimmed senderPublicKey:', senderPublicKey.trim());
-      console.log('Trimmed recipient:', recipient.trim());
-
       // Validate that senderPublicKey and recipient are base58 strings
       if (!bs58.decodeUnsafe(senderPublicKey.trim()) || !bs58.decodeUnsafe(recipient.trim())) {
         return res.status(400).json({ error: 'Invalid senderPublicKey or recipient. They must be base58 strings.' });
@@ -43,7 +35,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Create a transaction
       const transaction = new Transaction({
-        recentBlockhash: blockhash
+        recentBlockhash: blockhash,
+        feePayer: gasSponsorKeypair.publicKey, // Set the feePayer to the gas sponsor's wallet
       }).add(
         SystemProgram.transfer({
           fromPubkey: new PublicKey(senderPublicKey.trim()), // Use the connected user's wallet public key as the sender
@@ -52,20 +45,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
       );
 
-      // Sign the transaction with the gas sponsor's keypair
-      transaction.sign(gasSponsorKeypair);
+      // Serialize the transaction and send it to the frontend
+      const serializedTransaction = transaction.serialize({
+        requireAllSignatures: false // Do not require the gas sponsor's signature yet
+      });
 
-      // Log the transaction signatures
-      console.log('Transaction signatures:', transaction.signatures);
-
-      // Send the transaction to the Solana blockchain
-      const signature = await connection.sendRawTransaction(transaction.serialize());
-
-      // Confirm the transaction
-      const confirmResult = await connection.confirmTransaction(signature, 'confirmed');
-
-      // Respond with the result of the transaction submission
-      res.status(200).json({ signature, confirmResult });
+      // Respond with the serialized transaction for the frontend to sign
+      res.status(200).json({ serializedTransaction: bs58.encode(serializedTransaction) });
     } catch (error: any) {
       console.error('Error processing transfer:', error);
       console.error('Full stack:', error.stack); // Added detailed error stack logging
