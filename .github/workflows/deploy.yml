@@ -30,6 +30,6 @@ jobs:
       run: npm install vercel -g
 
     - name: Deploy to Vercel
-      run: vercel --prod --token ${{ secrets.VERCEL_AUTH_TOKEN }}
+      run: vercel --prod --token=$VERCEL_AUTH_TOKEN
       env:
         CI: false
