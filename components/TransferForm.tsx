@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { TextField, Button, Typography, Container, Box } from '@mui/material';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Transaction, PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
+
+// Dynamically import WalletMultiButton with no SSR
+const WalletMultiButton = dynamic(
+  () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
+  { ssr: false }
+);
 
 const TransferForm = () => {
   const { publicKey, signTransaction } = useWallet();

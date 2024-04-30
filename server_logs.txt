@@ -1,0 +1,47 @@
+
+> my-solana-app@0.1.0 dev /home/ubuntu/my-solana-app
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+ ⚠ Port 3002 is in use, trying 3003 instead.
+ ⚠ Port 3003 is in use, trying 3004 instead.
+ ⚠ Port 3004 is in use, trying 3005 instead.
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3005
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.7s
+ ○ Compiling / ...
+ ✓ Compiled / in 7s (2757 modules)
+ GET / 200 in 8405ms
+ GET / 200 in 40ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 610ms (690 modules)
+ GET /favicon.ico 200 in 748ms
+ ○ Compiling /api/transfer ...
+ ✓ Compiled /api/transfer in 668ms (659 modules)
+ POST /api/transfer 400 in 711ms
+ POST /api/transfer 500 in 4ms
+   Reload env: .env.local
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 6.6s (3206 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET / 200 in 339ms
+ GET /_next/static/webpack/42481ea41c0dc252.webpack.hot-update.json 404 in 3143ms
+ GET / 200 in 33ms
+ ✓ Compiled /favicon.ico in 282ms (903 modules)
+ GET /favicon.ico 200 in 410ms
+ ✓ Compiled in 3.1s (2955 modules)
+   Reload env: .env.local
+ ✓ Compiled in 2.7s (2955 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 889ms (3168 modules)
+ GET / 404 in 1095ms
+ GET /_next/static/css/app/layout.css?v=1714450969614 404 in 68ms
+ GET /_next/static/media/c9a5bc6a7c948fb0-s.p.woff2 404 in 66ms
+ GET /_next/static/chunks/main-app.js?v=1714450969614 404 in 65ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 68ms
+ ✓ Compiled /favicon.ico in 231ms (886 modules)
+ GET /favicon.ico 200 in 366ms
