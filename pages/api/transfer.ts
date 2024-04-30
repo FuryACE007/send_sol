@@ -5,10 +5,16 @@ import bs58 from 'bs58';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
-      // Parse the request body to get the recipient's wallet address, the amount of SOL to be transferred, and the gas sponsor's private key
-      const { recipient, amount, gasSponsorPrivateKey, senderPublicKey, signedTransaction } = req.body;
-      if (!recipient || !amount || typeof amount !== 'number' || !gasSponsorPrivateKey || !senderPublicKey) {
-        return res.status(400).json({ error: 'Recipient, amount, gas sponsor private key, and sender public key are required. Amount must be a number.' });
+      // Parse the request body to get the recipient's wallet address, the amount of SOL to be transferred, and the sender's public key
+      const { recipient, amount, senderPublicKey, signedTransaction } = req.body;
+      if (!recipient || !amount || typeof amount !== 'number' || !senderPublicKey) {
+        return res.status(400).json({ error: 'Recipient, amount, and sender public key are required. Amount must be a number.' });
+      }
+
+      // Fetch the gas sponsor's private key from environment variables
+      const gasSponsorPrivateKey = process.env.GAS_SPONSOR_PRIVATE_KEY;
+      if (!gasSponsorPrivateKey) {
+        return res.status(500).json({ error: 'Gas sponsor private key not found in environment variables.' });
       }
 
       // Convert the base58-encoded gas sponsor private key to a Uint8Array
