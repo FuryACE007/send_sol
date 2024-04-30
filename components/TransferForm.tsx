@@ -9,7 +9,6 @@ const TransferForm = () => {
   const { publicKey, signTransaction } = useWallet();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
-  const [gasSponsorPrivateKey, setGasSponsorPrivateKey] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRecipientChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,10 +17,6 @@ const TransferForm = () => {
 
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAmount(event.target.value);
-  };
-
-  const handleGasSponsorPrivateKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setGasSponsorPrivateKey(event.target.value);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -37,7 +32,7 @@ const TransferForm = () => {
     }
 
     // Ensure all fields are filled
-    if (!publicKey || !recipient || !gasSponsorPrivateKey) {
+    if (!publicKey || !recipient) {
       alert('Please make sure all fields are filled and your wallet is connected.');
       setIsSubmitting(false);
       return;
@@ -53,7 +48,6 @@ const TransferForm = () => {
           senderPublicKey: publicKey.toBase58(),
           recipient,
           amount: parsedAmount,
-          gasSponsorPrivateKey,
         }),
       });
 
@@ -128,18 +122,7 @@ const TransferForm = () => {
             value={amount}
             onChange={handleAmountChange}
           />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="gasSponsorPrivateKey"
-            label="Gas Sponsor Private Key"
-            type="password"
-            id="gasSponsorPrivateKey"
-            autoComplete="current-password"
-            value={gasSponsorPrivateKey}
-            onChange={handleGasSponsorPrivateKeyChange}
-          />
+          {/* Removed Gas Sponsor Private Key field as it's no longer needed */}
           <Button
             type="submit"
             fullWidth
