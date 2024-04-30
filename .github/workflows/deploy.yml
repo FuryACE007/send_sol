@@ -1,12 +1,12 @@
-name: Deploy to Netlify
+name: Deploy to Vercel
 
 on:
   push:
     branches:
-      - feature/wallet-integration
+      - deployment
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,10 +23,10 @@ jobs:
     - name: Build
       run: pnpm build
 
-    - name: Install Netlify CLI
-      run: npm install netlify-cli -g
+    - name: Install Vercel CLI
+      run: npm install vercel -g
 
-    - name: Deploy to Netlify
-      run: netlify deploy --prod --dir=out --message "GitHub Actions deploy" --auth ${{ secrets.NETLIFY_AUTH_TOKEN }} --site ${{ secrets.NETLIFY_SITE_ID }}
+    - name: Deploy to Vercel
+      run: vercel --prod --token ${{ secrets.VERCEL_AUTH_TOKEN }}
       env:
         CI: false
