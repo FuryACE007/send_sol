@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { TextField, Button, Typography, Container, Box } from '@mui/material';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { transferSOL } from '../utils/transactionHandler'; // Import the transferSOL function
+import { LAMPORTS_PER_SOL } from '@solana/web3.js'; // Import the LAMPORTS_PER_SOL constant
 
 const TransferForm = () => {
-  const { publicKey } = useWallet();
+  const { publicKey, signTransaction } = useWallet();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
-  const [gasSponsorPrivateKey, setGasSponsorPrivateKey] = useState('');
 
   const handleRecipientChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRecipient(event.target.value);
@@ -17,24 +18,34 @@ const TransferForm = () => {
     setAmount(event.target.value);
   };
 
-  const handleGasSponsorPrivateKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setGasSponsorPrivateKey(event.target.value);
-  };
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     // Implement the transfer logic
     try {
+      // Ensure the wallet is connected
+      if (!publicKey) {
+        alert('Please connect your wallet.');
+        return;
+      }
+
+      // Convert the amount to lamports
+      const lamports = parseFloat(amount) * LAMPORTS_PER_SOL;
+      if (isNaN(lamports)) {
+        alert('Invalid amount.');
+        return;
+      }
+
+      // Create and sign the transaction
+      const signedTransaction = await transferSOL(publicKey, recipient, lamports, signTransaction);
+
+      // Send the signed transaction to the server
       const response = await fetch('/api/transfer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          senderPublicKey: publicKey?.toBase58(),
-          recipient,
-          amount: parseFloat(amount),
-          gasSponsorPrivateKey,
+          signedTransaction,
         }),
       });
 
@@ -82,18 +93,6 @@ const TransferForm = () => {
             autoComplete="amount"
             value={amount}
             onChange={handleAmountChange}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="gasSponsorPrivateKey"
-            label="Gas Sponsor Private Key"
-            type="password"
-            id="gasSponsorPrivateKey"
-            autoComplete="current-password"
-            value={gasSponsorPrivateKey}
-            onChange={handleGasSponsorPrivateKeyChange}
           />
           <Button
             type="submit"
