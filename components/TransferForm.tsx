@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { TextField, Button, Typography, Container, Box } from '@mui/material';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { useUmi } from '../hooks/useUmi';
 
 const TransferForm = () => {
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey } = useWallet();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
+  const gasSponsorPrivateKey = process.env.NEXT_PUBLIC_GAS_SPONSOR_PRIVATE_KEY || '';
+
+  // Log the gas sponsor private key length for debugging purposes
+  console.log(`Gas sponsor private key length: ${gasSponsorPrivateKey.length}`);
+
+  const umi = useUmi(gasSponsorPrivateKey);
 
   const handleRecipientChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRecipient(event.target.value);
@@ -17,73 +24,49 @@ const TransferForm = () => {
     setAmount(event.target.value);
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (!publicKey) {
+      alert('Please connect your wallet.');
+      return;
+    }
+
+    if (!gasSponsorPrivateKey) {
+      console.error('Gas sponsor private key is not set in the environment variables.');
+      alert('Error: Gas sponsor private key is not set.');
+      return;
+    }
+
+    const lamports = parseFloat(amount) * LAMPORTS_PER_SOL;
+    if (isNaN(lamports)) {
+      alert('Invalid amount.');
+      return;
+    }
+
     try {
-      if (!publicKey) {
-        alert('Please connect your wallet.');
-        return;
+      const { signature } = await umi.transferSol(recipient, lamports);
+
+      const response = await fetch('/api/transfer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ signature }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
       }
 
-      const lamports = parseFloat(amount) * LAMPORTS_PER_SOL;
-      if (isNaN(lamports)) {
-        alert('Invalid amount.');
-        return;
-      }
-
-      // Check if the environment variable is defined
-      if (!process.env.NEXT_PUBLIC_GAS_SPONSOR_PRIVATE_KEY) {
-        console.error('Gas sponsor private key is not defined in the environment variables.');
-        alert('Transfer failed. Gas sponsor private key is not available.');
-        return;
-      }
-
-      const gasSponsorPrivateKey = process.env.NEXT_PUBLIC_GAS_SPONSOR_PRIVATE_KEY.split(',').map(s => parseInt(s, 10));
-      const gasSponsorKeypair = Keypair.fromSecretKey(new Uint8Array(gasSponsorPrivateKey));
-
-      // Create a new transaction
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: new PublicKey(recipient),
-          lamports: lamports,
-        })
-      );
-
-      // Sign the transaction using the wallet's signTransaction function
-      if (signTransaction) {
-        const signedTransaction = await signTransaction(transaction);
-
-        // Serialize the signed transaction
-        const serializedTransaction = signedTransaction.serialize();
-
-        // Send the signed transaction to the server
-        const response = await fetch('/api/transfer', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            signedTransaction: serializedTransaction,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Transaction signature:', data.signature);
-        alert(`Transfer successful! Transaction signature: ${data.signature}`);
-      } else {
-        throw new Error('Wallet not connected properly. signTransaction function is undefined.');
-      }
+      const data = await response.json();
+      console.log('Transaction signature:', data.signature);
+      alert(`Transfer successful! Transaction signature: ${data.signature}`);
     } catch (error) {
       console.error('Error submitting transfer:', error);
       alert('Transfer failed. Please try again.');
     }
-  };
+  }, [publicKey, recipient, amount, umi, gasSponsorPrivateKey]);
 
   return (
     <Container maxWidth="sm">

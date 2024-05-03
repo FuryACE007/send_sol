@@ -1,9 +1,18 @@
 import { useMemo } from 'react';
 import { Connection, Keypair, clusterApiUrl, SystemProgram, LAMPORTS_PER_SOL, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import bs58 from 'bs58';
 
 export const useUmi = (privateKey: string) => {
-  // Convert the private key string to a Uint8Array
-  const privateKeyBytes = Uint8Array.from(privateKey.split(',').map(s => parseInt(s, 10)));
+  // Decode the base58 private key string to a Uint8Array
+  const privateKeyBytes = bs58.decode(privateKey);
+
+  // Log the length of the privateKeyBytes for debugging purposes
+  console.log(`Decoded private key length: ${privateKeyBytes.length}`);
+
+  // Check if the decoded private key is of the correct size (64 bytes for Solana Keypair)
+  if (privateKeyBytes.length !== 64) {
+    throw new Error(`Invalid private key size. Expected 64 bytes, got ${privateKeyBytes.length}`);
+  }
 
   // Generate a Keypair from the private key bytes
   const signer = Keypair.fromSecretKey(privateKeyBytes);
